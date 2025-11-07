@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Academia Videira - Analisador de Bioimpedância",
+  "description": "Um aplicativo para analisar dados de bioimpedância de alunos, comparar com métricas ideais e gerar um plano de dieta básico usando IA.",
+  "requestFramePermissions": []
+}
