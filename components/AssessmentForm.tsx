@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { StudentData, AnalysisResult } from '../types';
+import { Student, StudentData, AnalysisResult } from '../types';
 import { analyzeBioimpedance } from '../services/geminiService';
 import InputGroup from './InputGroup';
 import Loader from './Loader';
-import { UserIcon, ArrowUturnLeftIcon } from './icons';
+import { UserIcon, ArrowUturnLeftIcon, QueueListIcon } from './icons';
 
 interface AssessmentFormProps {
   onSave: (studentData: StudentData, analysisResult: AnalysisResult) => void;
-  existingStudentName?: string;
+  student?: Student | null;
   onBack: () => void;
 }
 
@@ -23,9 +23,13 @@ type AssessmentFormData = {
   aguaCorporal: string;
   taxaMetabolicaBasal: string;
   objetivo: StudentData['objetivo'];
+  nivelAtividade: StudentData['nivelAtividade'];
+  condicoesSaude: string;
+  restricoesMedicas: string;
+  suplementos: string;
 };
 
-const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo'> = {
+const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 'nivelAtividade'> = {
   idade: '',
   altura: '',
   peso: '',
@@ -34,31 +38,42 @@ const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo'> =
   gorduraVisceral: '',
   aguaCorporal: '',
   taxaMetabolicaBasal: '',
+  condicoesSaude: '',
+  restricoesMedicas: '',
+  suplementos: '',
 };
 
-const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, existingStudentName, onBack }) => {
+const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack }) => {
   const [formData, setFormData] = useState<AssessmentFormData>({
     ...initialFormState,
-    nome: existingStudentName || '',
+    nome: student?.name || '',
     objetivo: 'perder_peso',
     sexo: 'feminino',
+    nivelAtividade: 'sedentario',
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (existingStudentName) {
-      setFormData(prev => ({ ...prev, nome: existingStudentName }));
+    if (student) {
+      setFormData(prev => ({ 
+          ...prev, 
+          nome: student.name,
+          idade: student.idade ? String(student.idade) : '',
+          altura: student.altura ? String(student.altura) : '',
+          sexo: student.sexo || 'feminino',
+          objetivo: student.objetivo || 'perder_peso',
+          nivelAtividade: student.nivelAtividade || 'sedentario',
+          condicoesSaude: student.condicoesSaude || '',
+          restricoesMedicas: student.restricoesMedicas || '',
+          suplementos: student.suplementos || '',
+        }));
     }
-  }, [existingStudentName]);
+  }, [student]);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    if (name === 'objetivo' || name === 'sexo') {
-      setFormData(prev => ({ ...prev, [name]: value as any }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value as any }));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,18 +109,27 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, existingStudent
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-green-400 flex items-center">
           <UserIcon className="w-7 h-7 mr-3" />
-          {existingStudentName ? `Nova Avaliação para ${existingStudentName}` : 'Cadastrar Novo Aluno'}
+          {student ? `Nova Avaliação para ${student.name}` : 'Cadastrar Novo Aluno'}
         </h2>
-        <button onClick={onBack} className="text-gray-400 hover:text-white transition">
-           <ArrowUturnLeftIcon className="w-6 h-6" />
-        </button>
+        {student ? (
+            <button onClick={onBack} className="text-gray-400 hover:text-white transition" aria-label="Voltar">
+              <ArrowUturnLeftIcon className="w-6 h-6" />
+            </button>
+          ) : (
+            <button
+              onClick={onBack}
+              className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition duration-300"
+            >
+              <QueueListIcon className="w-5 h-5 mr-2" />
+              Ver Lista de Alunos
+            </button>
+        )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
+        <h3 className="text-xl font-semibold text-green-400">Informações Pessoais</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputGroup label="Nome" name="nome" value={formData.nome} onChange={handleChange} required disabled={!!existingStudentName} />
+          <InputGroup label="Nome" name="nome" value={formData.nome} onChange={handleChange} required disabled={!!student} />
           <InputGroup label="Idade" name="idade" type="number" value={formData.idade} onChange={handleChange} required placeholder="ex: 25" />
-          <InputGroup label="Altura (cm)" name="altura" type="number" value={formData.altura} onChange={handleChange} required placeholder="ex: 175" />
-          <InputGroup label="Peso (kg)" name="peso" type="number" value={formData.peso} onChange={handleChange} required placeholder="ex: 70.5" step="0.1" />
         </div>
         
         <div>
@@ -123,19 +147,8 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, existingStudent
         </div>
 
         <div className="border-t border-gray-700 my-2"></div>
-
-        <h3 className="text-xl font-semibold text-green-400 mb-4">Dados da Bioimpedância</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <InputGroup label="Gordura Corporal (%)" name="percentualGordura" type="number" value={formData.percentualGordura} onChange={handleChange} required placeholder="ex: 22" step="0.1" />
-          <InputGroup label="Massa Muscular (kg)" name="massaMuscular" type="number" value={formData.massaMuscular} onChange={handleChange} required placeholder="ex: 55" step="0.1" />
-          <InputGroup label="Gordura Visceral (Nível)" name="gorduraVisceral" type="number" value={formData.gorduraVisceral} onChange={handleChange} required placeholder="ex: 4" />
-          <InputGroup label="Água Corporal (%)" name="aguaCorporal" type="number" value={formData.aguaCorporal} onChange={handleChange} required placeholder="ex: 55.5" step="0.1" />
-          <InputGroup label="TMB (kcal)" name="taxaMetabolicaBasal" type="number" value={formData.taxaMetabolicaBasal} onChange={handleChange} required placeholder="ex: 1500" />
-        </div>
-
-        <div className="border-t border-gray-700 my-2"></div>
-        
-        <div>
+        <h3 className="text-xl font-semibold text-green-400">Informações de Saúde e Atividade</h3>
+         <div>
           <label htmlFor="objetivo" className="block text-sm font-medium text-gray-300 mb-2">Objetivo Principal</label>
           <select
             id="objetivo"
@@ -152,6 +165,45 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, existingStudent
             <option value="saude_geral">Saúde e Bem-estar Geral</option>
           </select>
         </div>
+         <div>
+          <label htmlFor="nivelAtividade" className="block text-sm font-medium text-gray-300 mb-2">Nível de Atividade Física</label>
+          <select id="nivelAtividade" name="nivelAtividade" value={formData.nivelAtividade} onChange={handleChange} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200">
+              <option value="sedentario">Sedentário (pouco ou nenhum exercício)</option>
+              <option value="leve">Levemente ativo (1-3 dias/semana)</option>
+              <option value="moderado">Moderadamente ativo (3-5 dias/semana)</option>
+              <option value="ativo">Ativo (6-7 dias/semana)</option>
+              <option value="muito_ativo">Muito Ativo (trabalho físico/intenso)</option>
+          </select>
+        </div>
+        <div>
+            <label htmlFor="condicoesSaude" className="block text-sm font-medium text-gray-300 mb-2">Condições de Saúde (Opcional)</label>
+            <textarea id="condicoesSaude" name="condicoesSaude" value={formData.condicoesSaude} onChange={handleChange} placeholder="Ex: Diabetes, hipertensão, etc." rows={2} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"></textarea>
+        </div>
+        <div>
+            <label htmlFor="restricoesMedicas" className="block text-sm font-medium text-gray-300 mb-2">Restrições Médicas/Alimentares (Opcional)</label>
+            <textarea id="restricoesMedicas" name="restricoesMedicas" value={formData.restricoesMedicas} onChange={handleChange} placeholder="Ex: Alergia a glúten, lesão no joelho, etc." rows={2} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"></textarea>
+        </div>
+        <div>
+            <label htmlFor="suplementos" className="block text-sm font-medium text-gray-300 mb-2">Suplementos Atuais (Opcional)</label>
+            <textarea id="suplementos" name="suplementos" value={formData.suplementos} onChange={handleChange} placeholder="Ex: Whey Protein, Creatina, etc." rows={2} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"></textarea>
+        </div>
+
+
+        <div className="border-t border-gray-700 my-2"></div>
+        <h3 className="text-xl font-semibold text-green-400 mb-4">Dados da Bioimpedância</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputGroup label="Altura (cm)" name="altura" type="number" value={formData.altura} onChange={handleChange} required placeholder="ex: 175" />
+          <InputGroup label="Peso (kg)" name="peso" type="number" value={formData.peso} onChange={handleChange} required placeholder="ex: 70.5" step="0.1" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <InputGroup label="Gordura Corporal (%)" name="percentualGordura" type="number" value={formData.percentualGordura} onChange={handleChange} required placeholder="ex: 22" step="0.1" />
+          <InputGroup label="Massa Muscular (kg)" name="massaMuscular" type="number" value={formData.massaMuscular} onChange={handleChange} required placeholder="ex: 55" step="0.1" />
+          <InputGroup label="Gordura Visceral (Nível)" name="gorduraVisceral" type="number" value={formData.gorduraVisceral} onChange={handleChange} required placeholder="ex: 4" />
+          <InputGroup label="Água Corporal (%)" name="aguaCorporal" type="number" value={formData.aguaCorporal} onChange={handleChange} required placeholder="ex: 55.5" step="0.1" />
+          <InputGroup label="TMB (kcal)" name="taxaMetabolicaBasal" type="number" value={formData.taxaMetabolicaBasal} onChange={handleChange} required placeholder="ex: 1500" />
+        </div>
+
+        <div className="border-t border-gray-700 my-2"></div>
 
         <div className="pt-4">
           <button
