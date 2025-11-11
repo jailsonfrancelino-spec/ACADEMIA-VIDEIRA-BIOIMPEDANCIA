@@ -18,6 +18,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ student, onSave, onCa
         idade: student.idade ? String(student.idade) : '',
         altura: student.altura ? String(student.altura) : '',
         sexo: student.sexo || 'feminino',
+        objetivo: student.objetivo || 'perder_peso',
         nivelAtividade: student.nivelAtividade || 'sedentario',
         condicoesSaude: student.condicoesSaude || '',
         restricoesMedicas: student.restricoesMedicas || '',
@@ -35,6 +36,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ student, onSave, onCa
             idade: student.idade ? String(student.idade) : '',
             altura: student.altura ? String(student.altura) : '',
             sexo: student.sexo || 'feminino',
+            objetivo: student.objetivo || 'perder_peso',
             nivelAtividade: student.nivelAtividade || 'sedentario',
             condicoesSaude: student.condicoesSaude || '',
             restricoesMedicas: student.restricoesMedicas || '',
@@ -77,6 +79,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ student, onSave, onCa
             idade: formData.idade ? parseInt(formData.idade, 10) : undefined,
             altura: formData.altura ? parseInt(formData.altura, 10) : undefined,
             sexo: formData.sexo as any,
+            objetivo: formData.objetivo as any,
             nivelAtividade: formData.nivelAtividade as any,
             condicoesSaude: formData.condicoesSaude,
             restricoesMedicas: formData.restricoesMedicas,
@@ -137,6 +140,17 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ student, onSave, onCa
                     <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
                         <option value="feminino">Feminino</option>
                         <option value="masculino">Masculino</option>
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="objetivo" className="block text-sm font-medium text-gray-300 mb-2">Objetivo Principal</label>
+                    <select id="objetivo" name="objetivo" value={formData.objetivo} onChange={handleChange} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <option value="perder_peso">Perder Peso</option>
+                        <option value="ganhar_massa">Ganhar Massa Muscular</option>
+                        <option value="manter">Manter o Peso</option>
+                        <option value="definicao_muscular">Definição Muscular</option>
+                        <option value="melhorar_resistencia">Melhorar Resistência</option>
+                        <option value="saude_geral">Saúde e Bem-estar Geral</option>
                     </select>
                 </div>
                  <div>
