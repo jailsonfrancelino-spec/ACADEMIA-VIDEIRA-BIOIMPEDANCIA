@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AnalysisResult, AnalysisMetric, DietPlan, StudentData, Assessment, ComparativeChange } from '../types';
-import { ArrowUturnLeftIcon, DocumentArrowDownIcon, SparklesIcon, ExclamationTriangleIcon, ClipboardDocumentListIcon, ArrowUpIcon, ArrowDownIcon, ArrowsRightLeftIcon, ScaleIcon } from './icons';
+import { AnalysisResult, AnalysisMetric, DietPlan, StudentData, Assessment, ComparativeChange, ActionPlan } from '../types';
+import { ArrowUturnLeftIcon, DocumentArrowDownIcon, SparklesIcon, ExclamationTriangleIcon, ClipboardDocumentListIcon, ArrowUpIcon, ArrowDownIcon, ArrowsRightLeftIcon, ScaleIcon, FlagIcon, CalendarDaysIcon } from './icons';
 import Loader from './Loader';
 import PrintableSingleReport from './PrintableSingleReport';
 
@@ -139,6 +139,43 @@ const ComparativeChangeCard: React.FC<{ change: ComparativeChange }> = ({ change
         </div>
     );
 };
+
+const ActionPlanDisplay: React.FC<{ plan: ActionPlan }> = ({ plan }) => (
+    <div className="bg-gray-800 rounded-xl p-6 md:p-8 shadow-2xl border border-yellow-500/20">
+        <h3 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center">
+            <FlagIcon className="w-6 h-6 mr-3" />
+            Seu Plano de Ação - Próximos 60 Dias
+        </h3>
+        <div className="text-center bg-gray-700/50 p-4 rounded-lg mb-6">
+            <p className="text-gray-300">Próxima Avaliação Recomendada:</p>
+            <p className="text-xl font-bold text-white flex items-center justify-center gap-2 mt-1">
+                <CalendarDaysIcon className="w-5 h-5" />
+                {plan.nextAssessmentDate}
+            </p>
+        </div>
+        
+        <div className="space-y-4">
+            {plan.focusAreas.map((area, index) => (
+                <div key={index} className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-white text-lg">{area.title}</h4>
+                    <ul className="mt-2 space-y-2 text-gray-300 list-inside pl-2">
+                        {area.goals.map((goal, goalIndex) => (
+                             <li key={goalIndex} className="flex items-start">
+                                <span className="text-yellow-400 mr-3 mt-1">&#10148;</span>
+                                <span>{goal}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+        </div>
+
+        <p className="mt-6 text-center text-gray-300 italic bg-gray-900/30 p-4 rounded-lg">
+            "{plan.motivationalMessage}"
+        </p>
+    </div>
+);
+
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, studentName, studentData, buttonText }) => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -308,6 +345,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, studentN
             />
           </div>
         </div>
+
+        {result.actionPlan && <ActionPlanDisplay plan={result.actionPlan} />}
 
         <DietPlanDisplay plan={result.dietPlan} />
       </div>

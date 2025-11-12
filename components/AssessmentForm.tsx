@@ -1,17 +1,17 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Student, StudentData, AnalysisResult } from '../types';
-import { analyzeBioimpedance } from '../services/geminiService';
+import { Student, StudentData } from '../types';
 import InputGroup from './InputGroup';
 import Loader from './Loader';
 import { UserIcon, ArrowUturnLeftIcon, QueueListIcon } from './icons';
 
 interface AssessmentFormProps {
-  onSave: (studentData: StudentData, analysisResult: AnalysisResult) => void;
+  onSave: (studentData: StudentData) => Promise<void>;
   student?: Student | null;
   onBack: () => void;
 }
 
 type AssessmentFormData = {
+  assessmentDate: string;
   nome: string;
   idade: string;
   altura: string;
@@ -29,7 +29,7 @@ type AssessmentFormData = {
   suplementos: string;
 };
 
-const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 'nivelAtividade'> = {
+const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 'nivelAtividade' | 'assessmentDate'> = {
   idade: '',
   altura: '',
   peso: '',
@@ -46,6 +46,7 @@ const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 
 const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack }) => {
   const [formData, setFormData] = useState<AssessmentFormData>({
     ...initialFormState,
+    assessmentDate: new Date().toISOString().split('T')[0],
     nome: student?.name || '',
     objetivo: 'perder_peso',
     sexo: 'feminino',
@@ -83,6 +84,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
 
     const numericData: StudentData = {
       ...formData,
+      assessmentDate: formData.assessmentDate,
       idade: parseFloat(formData.idade),
       altura: parseFloat(formData.altura),
       peso: parseFloat(formData.peso),
@@ -94,13 +96,13 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
     };
 
     try {
-      const result = await analyzeBioimpedance(numericData);
-      onSave(numericData, result);
+      await onSave(numericData);
+      // Em caso de sucesso, o componente pai desmontará este formulário.
+      // Portanto, não há necessidade de chamar setIsLoading(false).
     } catch (err) {
       setError('Ocorreu um erro ao analisar os dados. Verifique os valores e tente novamente.');
       console.error(err);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Em caso de erro, permaneça no formulário e mostre a mensagem de erro.
     }
   };
 
@@ -126,26 +128,41 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h3 className="text-xl font-semibold text-green-400">Informações Pessoais</h3>
+        <h3 className="text-xl font-semibold text-green-400">Informações Pessoais e da Avaliação</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <InputGroup label="Nome" name="nome" value={formData.nome} onChange={handleChange} required disabled={!!student} />
-          <InputGroup label="Idade" name="idade" type="number" value={formData.idade} onChange={handleChange} required placeholder="ex: 25" />
+           <div>
+              <label htmlFor="assessmentDate" className="block text-sm font-medium text-gray-300 mb-2">
+                Data da Avaliação
+              </label>
+              <input
+                type="date"
+                id="assessmentDate"
+                name="assessmentDate"
+                value={formData.assessmentDate}
+                onChange={handleChange}
+                required
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
+              />
+            </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputGroup label="Idade" name="idade" type="number" value={formData.idade} onChange={handleChange} required placeholder="ex: 25" />
+             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Sexo</label>
+              <div className="flex items-center space-x-4 pt-3">
+                <label className="flex items-center text-white cursor-pointer">
+                  <input type="radio" name="sexo" value="feminino" checked={formData.sexo === 'feminino'} onChange={handleChange} className="form-radio h-4 w-4 text-green-600 bg-gray-700 border-gray-600 focus:ring-green-500"/>
+                  <span className="ml-2">Feminino</span>
+                </label>
+                <label className="flex items-center text-white cursor-pointer">
+                  <input type="radio" name="sexo" value="masculino" checked={formData.sexo === 'masculino'} onChange={handleChange} className="form-radio h-4 w-4 text-green-600 bg-gray-700 border-gray-600 focus:ring-green-500"/>
+                  <span className="ml-2">Masculino</span>
+                </label>
+              </div>
+            </div>
         </div>
         
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Sexo</label>
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center text-white cursor-pointer">
-              <input type="radio" name="sexo" value="feminino" checked={formData.sexo === 'feminino'} onChange={handleChange} className="form-radio h-4 w-4 text-green-600 bg-gray-700 border-gray-600 focus:ring-green-500"/>
-              <span className="ml-2">Feminino</span>
-            </label>
-            <label className="flex items-center text-white cursor-pointer">
-              <input type="radio" name="sexo" value="masculino" checked={formData.sexo === 'masculino'} onChange={handleChange} className="form-radio h-4 w-4 text-green-600 bg-gray-700 border-gray-600 focus:ring-green-500"/>
-              <span className="ml-2">Masculino</span>
-            </label>
-          </div>
-        </div>
-
         <div className="border-t border-gray-700 my-2"></div>
         <h3 className="text-xl font-semibold text-green-400">Informações de Saúde e Atividade</h3>
          <div>

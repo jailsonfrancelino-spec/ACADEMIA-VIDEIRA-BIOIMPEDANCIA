@@ -60,25 +60,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsCha
     setCurrentView('history');
   };
 
-  const handleSaveAssessment = async (assessmentData: StudentData, analysisResult: AnalysisResult) => {
+  const handleSaveAssessment = async (assessmentData: StudentData) => {
+    const studentForUpdate = students.find(s => s.name.toLowerCase() === assessmentData.nome.toLowerCase());
+    const isNewStudent = !studentForUpdate;
+    
+    // Pega os dados da avaliação anterior, se existir, para enviar para a IA.
+    const previousAssessmentData = studentForUpdate?.assessments?.[0]?.data;
+    const analysisResult = await analyzeBioimpedance(assessmentData, previousAssessmentData);
+
+    const dateParts = assessmentData.assessmentDate?.split('-').map(p => parseInt(p, 10));
+    // Fallback to current date if date is invalid or not present
+    const assessmentDateObject = dateParts && dateParts.length === 3 && dateParts.every(p => !isNaN(p)) 
+      ? new Date(dateParts[0], dateParts[1] - 1, dateParts[2]) 
+      : new Date();
+
     const newAssessment: Assessment = {
       id: `ass_${new Date().getTime()}`,
-      date: new Date().toISOString(),
+      date: assessmentDateObject.toISOString(),
       data: assessmentData,
       result: analysisResult,
     };
 
     let updatedStudents;
-    const studentForUpdate = students.find(s => s.name.toLowerCase() === assessmentData.nome.toLowerCase());
-    const isNewStudent = !studentForUpdate;
-    
-    // Passar a avaliação anterior para a análise da IA, se existir
-    const previousAssessmentData = studentForUpdate?.assessments?.[0]?.data;
-    const result = await analyzeBioimpedance(assessmentData, previousAssessmentData);
-    newAssessment.result = result;
 
     if (isNewStudent) {
-        // Esta lógica é principalmente para o caso de admin criar um aluno diretamente pelo form de avaliação
         const newStudent: Student = {
             id: `stu_${new Date().getTime()}`,
             name: assessmentData.nome,
@@ -98,7 +103,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsCha
             s.id === studentForUpdate.id
             ? { 
                 ...s, 
-                // Atualiza o perfil principal do aluno com os dados do formulário
                 idade: assessmentData.idade,
                 altura: assessmentData.altura,
                 sexo: assessmentData.sexo,
@@ -107,7 +111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsCha
                 condicoesSaude: assessmentData.condicoesSaude,
                 restricoesMedicas: assessmentData.restricoesMedicas,
                 suplementos: assessmentData.suplementos,
-                assessments: [...s.assessments, newAssessment].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) 
+                assessments: [newAssessment, ...s.assessments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) 
               }
             : s
         );
@@ -138,15 +142,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsCha
   const renderContent = () => {
     switch(currentView) {
       case 'form':
-        // A função onSave agora está quebrada. Ela espera 2 argumentos, mas a lógica de chamada da IA foi movida para dentro do handleSaveAssessment.
-        // Vamos simplificar e passar apenas os dados do formulário. A IA será chamada dentro do handleSaveAssessment.
-        const simplifiedOnSave = (data: StudentData) => {
-            // A chamada de `analyzeBioimpedance` e a criação do `AnalysisResult` agora acontecem dentro do `handleSaveAssessment`
-            handleSaveAssessment(data, {} as AnalysisResult); // Passa um objeto vazio, pois será regerado
-        };
-
         return <AssessmentForm 
-                  onSave={(studentData) => handleSaveAssessment(studentData, {} as AnalysisResult)} // Correção aqui
+                  onSave={handleSaveAssessment}
                   student={selectedStudent}
                   onBack={selectedStudent ? handleBackToHistory : handleBackToList}
                 />;

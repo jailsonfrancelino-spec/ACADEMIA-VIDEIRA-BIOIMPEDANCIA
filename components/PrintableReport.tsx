@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
-import { Student, AnalysisMetric, DietPlan, ComparativeChange } from '../types';
-import { SparklesIcon, ExclamationTriangleIcon, ClipboardDocumentListIcon, ArrowUpIcon, ArrowDownIcon, ArrowsRightLeftIcon } from './icons';
+import { Student, AnalysisMetric, DietPlan, ComparativeChange, ActionPlan } from '../types';
+import { SparklesIcon, ExclamationTriangleIcon, ClipboardDocumentListIcon, ArrowUpIcon, ArrowDownIcon, ArrowsRightLeftIcon, FlagIcon, CalendarDaysIcon } from './icons';
 
 // --- Sub-componentes reutilizados de ResultDisplay ---
 
@@ -116,6 +116,42 @@ const DietPlanDisplay: React.FC<{ plan: DietPlan }> = ({ plan }) => (
   </div>
 );
 
+const ActionPlanDisplay: React.FC<{ plan: ActionPlan }> = ({ plan }) => (
+    <div className="mt-8">
+        <h3 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center">
+            <FlagIcon className="w-6 h-6 mr-3" />
+            Plano de Ação - Próximos 60 Dias
+        </h3>
+        <div className="text-center bg-gray-700/50 p-4 rounded-lg mb-6">
+            <p className="text-gray-300">Próxima Avaliação Recomendada:</p>
+            <p className="text-xl font-bold text-white flex items-center justify-center gap-2 mt-1">
+                <CalendarDaysIcon className="w-5 h-5" />
+                {plan.nextAssessmentDate}
+            </p>
+        </div>
+        
+        <div className="space-y-4">
+            {plan.focusAreas.map((area, index) => (
+                <div key={index} className="bg-gray-700/50 p-4 rounded-lg break-inside-avoid">
+                    <h4 className="font-semibold text-white text-lg">{area.title}</h4>
+                    <ul className="mt-2 space-y-2 text-gray-300 list-inside pl-2">
+                        {area.goals.map((goal, goalIndex) => (
+                             <li key={goalIndex} className="flex items-start">
+                                <span className="text-yellow-400 mr-3 mt-1">&#10148;</span>
+                                <span>{goal}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+        </div>
+
+        <p className="mt-6 text-center text-gray-300 italic bg-gray-900/30 p-4 rounded-lg">
+            "{plan.motivationalMessage}"
+        </p>
+    </div>
+);
+
 // --- Componente Principal do Relatório ---
 
 interface PrintableReportProps {
@@ -195,6 +231,8 @@ const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(({ stud
               />
             </div>
           </div>
+
+          {assessment.result.actionPlan && <ActionPlanDisplay plan={assessment.result.actionPlan} />}
 
           <DietPlanDisplay plan={assessment.result.dietPlan} />
         </div>

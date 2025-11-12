@@ -1,4 +1,5 @@
 export interface StudentData {
+  assessmentDate?: string;
   nome: string;
   idade: number;
   altura: number;
@@ -52,6 +53,14 @@ export interface ComparativeAnalysis {
   changes: ComparativeChange[];
 }
 
+export interface ActionPlan {
+  nextAssessmentDate: string;
+  focusAreas: {
+    title: string;
+    goals: string[];
+  }[];
+  motivationalMessage: string;
+}
 
 export interface AnalysisResult {
   summary: string;
@@ -61,6 +70,7 @@ export interface AnalysisResult {
   recommendations: string[];
   dietPlan: DietPlan;
   comparativeAnalysis?: ComparativeAnalysis;
+  actionPlan: ActionPlan;
 }
 
 export interface Assessment {

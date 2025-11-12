@@ -30,9 +30,27 @@ const getNivelAtividadeText = (nivel: StudentData['nivelAtividade']): string => 
     }
 }
 
+const getFormattedDateForPrompt = (dateString?: string): string => {
+  if (!dateString) return 'hoje';
+  
+  // Input date string is expected to be in "YYYY-MM-DD" format.
+  const dateParts = dateString.split('-').map(p => parseInt(p, 10));
+  
+  if (dateParts.length !== 3 || dateParts.some(isNaN)) {
+    return 'hoje';
+  }
+  
+  // new Date(year, monthIndex, day) treats arguments as local time.
+  const dateObject = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+  
+  return dateObject.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+};
+
+
 const generateComparativePrompt = (studentData: StudentData, previousData: StudentData): string => {
   const objetivoText = getObjetivoText(studentData.objetivo);
   const nivelAtividadeText = getNivelAtividadeText(studentData.nivelAtividade);
+  const assessmentDateText = getFormattedDateForPrompt(studentData.assessmentDate);
 
   return `
     Analise a EVOLUÇÃO de um aluno da academia comparando os dados de sua avaliação ATUAL com a ANTERIOR. Forneça uma avaliação HOLÍSTICA, ACIONÁVEL e COMPARATIVA, além de um plano de dieta de exemplo.
@@ -64,14 +82,19 @@ const generateComparativePrompt = (studentData: StudentData, previousData: Stude
         - **Summary:** Escreva um parágrafo motivacional (2-4 frases) sobre o progresso geral desde a última avaliação. Destaque as vitórias e as áreas que ainda precisam de foco, sempre conectando com o objetivo do aluno.
         - **Changes:** Para cada uma das 6 métricas acima, crie um objeto detalhando: 'metric', 'previousValue', 'currentValue', 'change' (ex: "+1.2 kg" ou "-0.8%"), uma 'assessment' concisa sobre o que essa mudança significa, e um 'status' ('positive', 'negative', 'neutral') baseado na direção da mudança em relação ao objetivo do aluno.
     3.  **Resumo Geral, Pontos Fortes, Pontos a Melhorar, Recomendações:** Essas seções devem ser baseadas nos dados ATUAIS, mas INFLUENCIADAS PELA COMPARAÇÃO. Por exemplo, uma recomendação pode ser "Continue com o plano, pois resultou em um ganho de massa muscular", ou "Vamos ajustar o cardio, pois o percentual de gordura aumentou".
-    4.  **Plano de Dieta e Aviso Legal:** Mantenha como antes, alinhado ao objetivo e dados atuais.
-    5.  **Formato:** Retorne estritamente no formato JSON especificado.
+    4.  **Plano de Ação Personalizado (NOVA SEÇÃO OBRIGATÓRIA):** Crie a seção 'actionPlan'.
+        - **nextAssessmentDate:** Calcule e forneça a data exata da próxima avaliação, que será em 60 dias a partir da data da avaliação atual (${assessmentDateText}). Formate como "DD de Mês de AAAA".
+        - **focusAreas:** Crie de 2 a 3 áreas de foco (ex: "Nutrição", "Treino de Força", "Cardio", "Consistência e Hábitos"). Para cada área, liste 2-3 metas específicas, mensuráveis e acionáveis para os próximos 60 dias, baseadas nos 'Pontos a Melhorar'.
+        - **motivationalMessage:** Escreva uma mensagem motivacional curta e personalizada para encorajar o aluno a seguir o plano nos próximos 60 dias.
+    5.  **Plano de Dieta e Aviso Legal:** Mantenha como antes, alinhado ao objetivo e dados atuais.
+    6.  **Formato:** Retorne estritamente no formato JSON especificado.
   `;
 };
 
 const generateInitialPrompt = (studentData: StudentData): string => {
   const objetivoText = getObjetivoText(studentData.objetivo);
   const nivelAtividadeText = getNivelAtividadeText(studentData.nivelAtividade);
+  const assessmentDateText = getFormattedDateForPrompt(studentData.assessmentDate);
 
   return `
     Analise os seguintes dados de um aluno da academia e forneça uma avaliação HOLÍSTICA, ACIONÁVEL, completa, detalhada e um plano de dieta de exemplo com múltiplas opções. CONSIDERE TODAS AS INFORMAÇÕES DE PERFIL FORNECIDAS PARA PERSONALIZAR A ANÁLISE E AS RECOMENDAÇÕES.
@@ -103,9 +126,13 @@ const generateInitialPrompt = (studentData: StudentData): string => {
         - **Pontos Fortes:** Liste 2-3 pontos positivos ou métricas que estão boas, com base nos dados fornecidos.
         - **Pontos a Melhorar:** Liste 2-3 áreas principais que precisam de atenção, explicando brevemente o porquê.
         - **Recomendações:** Forneça 3-4 recomendações práticas e acionáveis, além da dieta, como sugestões de treino, hidratação ou estilo de vida.
-    5.  **Plano de Dieta (Exemplo):** Elabore um plano de dieta de AMOSTRA com TRÊS SUGESTÕES SIMPLES E DIFERENTES para as refeições principais (café da manhã, almoço, jantar, lanches). Adicionalmente, inclua uma refeição chamada "Ceia (Opcional)" com 1 ou 2 sugestões leves. O plano deve ser alinhado com o objetivo do aluno. Para cada refeição, inclua uma sugestão de horário (ex: "07:00 - 08:00" ou "22:00 - 23:00" para a ceia).
-    6.  **Aviso Legal:** Inclua um aviso importante sobre a necessidade de consultar um nutricionista.
-    7.  **Formato:** Retorne os dados estritamente no formato JSON especificado.
+    5.  **Plano de Ação Personalizado (NOVA SEÇÃO OBRIGATÓRIA):** Crie a seção 'actionPlan'.
+        - **nextAssessmentDate:** Calcule e forneça a data exata da próxima avaliação, que será em 60 dias a partir da data da avaliação atual (${assessmentDateText}). Formate como "DD de Mês de AAAA".
+        - **focusAreas:** Crie de 2 a 3 áreas de foco (ex: "Nutrição", "Treino de Força", "Cardio", "Consistência e Hábitos"). Para cada área, liste 2-3 metas específicas, mensuráveis e acionáveis para os próximos 60 dias, baseadas nos 'Pontos a Melhorar'.
+        - **motivationalMessage:** Escreva uma mensagem motivacional curta e personalizada para encorajar o aluno a seguir o plano nos próximos 60 dias.
+    6.  **Plano de Dieta (Exemplo):** Elabore um plano de dieta de AMOSTRA com TRÊS SUGESTÕES SIMPLES E DIFERENTES para as refeições principais (café da manhã, almoço, jantar, lanches). Adicionalmente, inclua uma refeição chamada "Ceia (Opcional)" com 1 ou 2 sugestões leves. O plano deve ser alinhado com o objetivo do aluno. Para cada refeição, inclua uma sugestão de horário (ex: "07:00 - 08:00" ou "22:00 - 23:00" para a ceia).
+    7.  **Aviso Legal:** Inclua um aviso importante sobre a necessidade de consultar um nutricionista.
+    8.  **Formato:** Retorne os dados estritamente no formato JSON especificado.
   `;
 }
 
@@ -181,9 +208,29 @@ export const analyzeBioimpedance = async (studentData: StudentData, previousData
             }
         },
         required: ['summary', 'changes']
+      },
+      actionPlan: {
+        type: Type.OBJECT,
+        description: "Plano de ação personalizado com metas para os próximos 60 dias.",
+        properties: {
+          nextAssessmentDate: { type: Type.STRING, description: "Data da próxima avaliação em 60 dias." },
+          focusAreas: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING, description: "Área de foco, ex: Nutrição." },
+                goals: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Lista de metas para esta área." }
+              },
+              required: ['title', 'goals']
+            }
+          },
+          motivationalMessage: { type: Type.STRING, description: "Mensagem motivacional." }
+        },
+        required: ['nextAssessmentDate', 'focusAreas', 'motivationalMessage']
       }
     },
-    required: ['summary', 'analysis', 'strengths', 'areasForImprovement', 'recommendations', 'dietPlan']
+    required: ['summary', 'analysis', 'strengths', 'areasForImprovement', 'recommendations', 'dietPlan', 'actionPlan']
   };
 
   try {
