@@ -182,6 +182,9 @@ const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(({ stud
             <h2 className="text-3xl font-bold text-green-400">
               Avaliação de {new Date(assessment.date).toLocaleDateString('pt-BR')}
             </h2>
+            {assessment.data.instructorName && (
+              <p className="text-md text-gray-400 mt-1">Avaliador: {assessment.data.instructorName}</p>
+            )}
             <div className="bg-gray-700/50 p-4 rounded-lg mt-4">
                 <p className="text-gray-300">{assessment.result.summary}</p>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Student, StudentData } from '../types';
+import { Student, StudentData, CurrentUser } from '../types';
 import InputGroup from './InputGroup';
 import Loader from './Loader';
 import { UserIcon, ArrowUturnLeftIcon, QueueListIcon } from './icons';
@@ -8,10 +8,12 @@ interface AssessmentFormProps {
   onSave: (studentData: StudentData) => Promise<void>;
   student?: Student | null;
   onBack: () => void;
+  user: CurrentUser;
 }
 
 type AssessmentFormData = {
   assessmentDate: string;
+  instructorName: string;
   nome: string;
   idade: string;
   altura: string;
@@ -29,7 +31,7 @@ type AssessmentFormData = {
   suplementos: string;
 };
 
-const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 'nivelAtividade' | 'assessmentDate'> = {
+const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 'nivelAtividade' | 'assessmentDate' | 'instructorName'> = {
   idade: '',
   altura: '',
   peso: '',
@@ -43,10 +45,11 @@ const initialFormState: Omit<AssessmentFormData, 'nome' | 'objetivo' | 'sexo' | 
   suplementos: '',
 };
 
-const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack }) => {
+const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack, user }) => {
   const [formData, setFormData] = useState<AssessmentFormData>({
     ...initialFormState,
     assessmentDate: new Date().toISOString().split('T')[0],
+    instructorName: user.name,
     nome: student?.name || '',
     objetivo: 'perder_peso',
     sexo: 'feminino',
@@ -85,6 +88,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
     const numericData: StudentData = {
       ...formData,
       assessmentDate: formData.assessmentDate,
+      instructorName: formData.instructorName,
       idade: parseFloat(formData.idade),
       altura: parseFloat(formData.altura),
       peso: parseFloat(formData.peso),
@@ -129,7 +133,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <h3 className="text-xl font-semibold text-green-400">Informações Pessoais e da Avaliação</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InputGroup label="Nome" name="nome" value={formData.nome} onChange={handleChange} required disabled={!!student} />
            <div>
               <label htmlFor="assessmentDate" className="block text-sm font-medium text-gray-300 mb-2">
@@ -145,6 +149,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ onSave, student, onBack
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
               />
             </div>
+            <InputGroup label="Avaliador" name="instructorName" value={formData.instructorName} onChange={handleChange} required placeholder="Nome do Professor" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputGroup label="Idade" name="idade" type="number" value={formData.idade} onChange={handleChange} required placeholder="ex: 25" />

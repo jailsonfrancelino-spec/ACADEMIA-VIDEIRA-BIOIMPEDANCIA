@@ -264,7 +264,15 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, studentN
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
             <div>
               <h2 className="text-3xl font-bold text-green-400">Relatório de Bioimpedância</h2>
-              <p className="text-gray-400 mt-2 max-w-2xl">
+               <div className="text-sm text-gray-400 mt-1 flex items-center gap-x-4 flex-wrap">
+                  {studentData.assessmentDate && (
+                      <span>Data: <span className="font-semibold text-gray-300">{new Date(studentData.assessmentDate).toLocaleDateString('pt-BR')}</span></span>
+                  )}
+                  {studentData.instructorName && (
+                      <span className="sm:border-l border-gray-600 sm:pl-4">Avaliador: <span className="font-semibold text-gray-300">{studentData.instructorName}</span></span>
+                  )}
+              </div>
+              <p className="text-gray-400 mt-4 max-w-2xl">
                 Olá, <span className="font-semibold text-white">{studentName}</span>. Este relatório é uma fotografia do seu estado atual, 
                 uma ferramenta poderosa para guiar sua jornada, <strong className="text-yellow-400">e não um julgamento</strong>. 
                 A análise da IA considerou seu perfil completo — sua idade, altura, objetivo de <strong className="text-white">"{getObjetivoText(studentData.objetivo)}"</strong> e dados de bioimpedância — para criar uma visão detalhada e personalizada. 

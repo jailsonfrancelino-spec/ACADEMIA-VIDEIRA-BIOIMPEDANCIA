@@ -36,7 +36,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-gray-200 flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-4xl mx-auto">
         <Header user={currentUser} onLogout={handleLogout} />
-        <AdminDashboard students={students} onStudentsChange={handleStudentsChange} />
+        <AdminDashboard user={currentUser} students={students} onStudentsChange={handleStudentsChange} />
       </div>
        <footer className="text-center text-gray-500 mt-12 text-sm">
           <p>&copy; {new Date().getFullYear()} Academia Videira. Todos os direitos reservados.</p>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Student, StudentData, Assessment, AnalysisResult } from '../types';
+import { Student, StudentData, Assessment, AnalysisResult, CurrentUser } from '../types';
 import { analyzeBioimpedance } from '../services/geminiService';
 import StudentList from './StudentList';
 import AssessmentForm from './AssessmentForm';
@@ -12,9 +12,10 @@ type View = 'list' | 'form' | 'history' | 'result' | 'edit_student';
 interface AdminDashboardProps {
   students: Student[];
   onStudentsChange: (updatedStudents: Student[]) => void;
+  user: CurrentUser;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsChange }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsChange, user }) => {
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [latestAssessment, setLatestAssessment] = useState<Assessment | null>(null);
@@ -143,6 +144,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ students, onStudentsCha
     switch(currentView) {
       case 'form':
         return <AssessmentForm 
+                  user={user}
                   onSave={handleSaveAssessment}
                   student={selectedStudent}
                   onBack={selectedStudent ? handleBackToHistory : handleBackToList}

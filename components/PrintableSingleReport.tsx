@@ -156,6 +156,9 @@ const PrintableSingleReport = forwardRef<HTMLDivElement, PrintableSingleReportPr
           <h1 className="text-4xl font-extrabold text-green-400">Relatório de Bioimpedância</h1>
           <h2 className="text-3xl font-bold text-white mt-4">{assessment.data.nome}</h2>
           <p className="text-md text-gray-500 mt-2">Data da Avaliação: {new Date(assessment.date).toLocaleDateString('pt-BR')}</p>
+          {assessment.data.instructorName && (
+              <p className="text-md text-gray-500 mt-1">Avaliador: {assessment.data.instructorName}</p>
+          )}
           <div className="bg-gray-700/50 p-4 rounded-lg mt-4">
               <p className="text-gray-300">{assessment.result.summary}</p>
           </div>

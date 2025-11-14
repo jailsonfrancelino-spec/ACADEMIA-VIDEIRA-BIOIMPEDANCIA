@@ -61,6 +61,7 @@ const generateComparativePrompt = (studentData: StudentData, previousData: Stude
     - Sexo: ${studentData.sexo}
     - Altura: ${studentData.altura} cm
     - Objetivo Principal: ${objetivoText}
+    ${studentData.instructorName ? `- Avaliador: ${studentData.instructorName}` : ''}
     ${nivelAtividadeText ? `- Nível de Atividade Física: ${nivelAtividadeText}` : ''}
     ${studentData.condicoesSaude ? `- Condições de Saúde: ${studentData.condicoesSaude}` : ''}
     ${studentData.restricoesMedicas ? `- Restrições Médicas: ${studentData.restricoesMedicas}` : ''}
@@ -106,6 +107,7 @@ const generateInitialPrompt = (studentData: StudentData): string => {
     - Altura: ${studentData.altura} cm
     - Peso: ${studentData.peso} kg
     - Objetivo: ${objetivoText}
+    ${studentData.instructorName ? `- Avaliador: ${studentData.instructorName}` : ''}
     ${nivelAtividadeText ? `- Nível de Atividade Física: ${nivelAtividadeText}` : ''}
     ${studentData.condicoesSaude ? `- Condições de Saúde: ${studentData.condicoesSaude}` : ''}
     ${studentData.restricoesMedicas ? `- Restrições Médicas: ${studentData.restricoesMedicas}` : ''}

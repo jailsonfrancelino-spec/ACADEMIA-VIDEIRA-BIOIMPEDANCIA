@@ -1,5 +1,6 @@
 export interface StudentData {
   assessmentDate?: string;
+  instructorName?: string;
   nome: string;
   idade: number;
   altura: number;
